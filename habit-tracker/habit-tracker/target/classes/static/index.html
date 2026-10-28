@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task & Habit Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
+
+    <div class="max-w-6xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-800 pb-5">
+            <div>
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                    Task & Habit Retention System
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Spring Boot • JDBC • OOP • ArrayList & HashMap Engine</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center gap-3">
+                <label class="text-sm text-slate-400">Sort By:</label>
+                <select id="sortSelect" onchange="loadAllData()" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                    <option value="priority">Priority (High → Low)</option>
+                    <option value="deadline">Deadline (Earliest First)</option>
+                    <option value="streak">Habit Streak (Highest First)</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Statistics Dashboard (Powered by Backend HashMap) -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <p class="text-slate-400 text-xs uppercase tracking-wider">Completion Rate</p>
+                <p id="statCompletion" class="text-2xl font-bold text-emerald-400 mt-1">0%</p>
+                <p id="statTotalSub" class="text-xs text-slate-500 mt-1">0 of 0 tasks completed</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <p class="text-slate-400 text-xs uppercase tracking-wider">Overdue Alerts</p>
+                <p id="statOverdue" class="text-2xl font-bold text-rose-500 mt-1">0</p>
+                <p class="text-xs text-slate-500 mt-1">Requires immediate action</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <p class="text-slate-400 text-xs uppercase tracking-wider">Top Habit Streak</p>
+                <p id="statStreak" class="text-2xl font-bold text-amber-400 mt-1">0 🔥</p>
+                <p class="text-xs text-slate-500 mt-1">Best retention chain</p>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+                <p class="text-slate-400 text-xs uppercase tracking-wider">Priority Breakdown</p>
+                <div class="flex gap-3 mt-2 text-xs font-semibold">
+                    <span class="text-rose-400">H: <span id="prioHigh">0</span></span>
+                    <span class="text-amber-400">M: <span id="prioMed">0</span></span>
+                    <span class="text-emerald-400">L: <span id="prioLow">0</span></span>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">HashMap Aggregation</p>
+            </div>
+        </section>
+
+        <!-- Main Layout: Form + Item List -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Create Form -->
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-xl h-fit">
+                <h2 class="text-lg font-semibold mb-4 text-indigo-300">Add Task or Recurring Habit</h2>
+                <form id="itemForm" onsubmit="createItem(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Title</label>
+                        <input type="text" id="title" required placeholder="e.g., Solve 2 LeetCode Problems"
+                               class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Type</label>
+                            <select id="category" onchange="syncFrequency()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                                <option value="HABIT">Recurring Habit</option>
+                                <option value="TASK">One-Time Task</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Priority</label>
+                            <select id="priority" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                                <option value="HIGH">High</option>
+                                <option value="MEDIUM" selected>Medium</option>
+                                <option value="LOW">Low</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Frequency</label>
+                            <select id="frequency" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                                <option value="DAILY">Daily</option>
+                                <option value="WEEKLY">Weekly</option>
+                                <option value="ONCE">Once</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Target / Next Date</label>
+                            <input type="date" id="deadline" required
+                                   class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg text-sm transition">
+                        + Save to Database
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right Column: Active Items & Overdue Banner -->
+            <div class="lg:col-span-2 space-y-4">
+                <div id="itemsContainer" class="space-y-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Set default date picker to today
+        document.getElementById('deadline').valueAsDate = new Date();
+
+        function syncFrequency() {
+            const cat = document.getElementById('category').value;
+            const freq = document.getElementById('frequency');
+            if (cat === 'TASK') {
+                freq.value = 'ONCE';
+            } else if (freq.value === 'ONCE') {
+                freq.value = 'DAILY';
+            }
+        }
+
+        async function loadAllData() {
+            const sortBy = document.getElementById('sortSelect').value;
+            const [itemsRes, statsRes] = await Promise.all([
+                fetch(`/api/items?sortBy=${sortBy}`),
+                fetch('/api/items/stats')
+            ]);
+
+            const items = await itemsRes.json();
+            const stats = await statsRes.json();
+
+            renderStats(stats);
+            renderItems(items);
+        }
+
+        function renderStats(stats) {
+            document.getElementById('statCompletion').innerText = `${stats.completionRate}%`;
+            document.getElementById('statTotalSub').innerText = `${stats.completedItems} of ${stats.totalItems} tasks completed`;
+            document.getElementById('statOverdue').innerText = stats.overdueAlerts;
+            document.getElementById('statStreak').innerText = `${stats.maxStreak} 🔥`;
+
+            if (stats.priorityDistribution) {
+                document.getElementById('prioHigh').innerText = stats.priorityDistribution.HIGH || 0;
+                document.getElementById('prioMed').innerText = stats.priorityDistribution.MEDIUM || 0;
+                document.getElementById('prioLow').innerText = stats.priorityDistribution.LOW || 0;
+            }
+        }
+
+        function renderItems(items) {
+            const container = document.getElementById('itemsContainer');
+            if (items.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl p-8 text-center text-slate-500">
+                        No tasks or habits tracked yet. Add one on the left to start tracking retention!
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                const prioBadge = {
+                    HIGH: 'bg-rose-950 text-rose-400 border-rose-800',
+                    MEDIUM: 'bg-amber-950 text-amber-400 border-amber-800',
+                    LOW: 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                }[item.priority] || 'bg-slate-800 text-slate-300';
+
+                const overdueAlert = item.overdue
+                    ? `<span class="bg-rose-600/20 text-rose-400 border border-rose-500/40 text-xs px-2 py-0.5 rounded font-semibold animate-pulse">⚠️ OVERDUE (${Math.abs(item.daysUntilDeadline)}d)</span>`
+                    : `<span class="text-xs text-slate-400">Due: ${item.deadline}</span>`;
+
+                const actionLabel = item.category === 'HABIT'
+                    ? `Check-in (+1 🔥)`
+                    : (item.completed ? 'Completed ✓' : 'Mark Done');
+
+                return `
+                <div class="bg-slate-900 border ${item.overdue ? 'border-rose-600/60' : 'border-slate-800'} p-4 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition">
+                    <div class="space-y-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded border ${prioBadge}">${item.priority}</span>
+                            <span class="text-xs bg-indigo-950 text-indigo-300 border border-indigo-800 px-2 py-0.5 rounded">${item.category} • ${item.frequency}</span>
+                            ${item.category === 'HABIT' ? `<span class="text-xs bg-amber-950/80 text-amber-300 border border-amber-800 px-2 py-0.5 rounded">Streak: ${item.streak} 🔥</span>` : ''}
+                            ${overdueAlert}
+                        </div>
+                        <h3 class="text-base font-semibold ${item.completed ? 'line-through text-slate-500' : 'text-slate-100'}">${item.title}</h3>
+                    </div>
+
+                    <div class="flex items-center gap-2 self-end sm:self-center">
+                        <button onclick="toggleItem(${item.id})"
+                                class="px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                                    item.completed
+                                        ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                        : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                                }">
+                            ${actionLabel}
+                        </button>
+                        <button onclick="deleteItem(${item.id})"
+                                class="px-2.5 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-rose-950 hover:text-rose-400 text-slate-400 transition">
+                            ✕
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function createItem(e) {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('title').value,
+                category: document.getElementById('category').value,
+                priority: document.getElementById('priority').value,
+                frequency: document.getElementById('frequency').value,
+                deadline: document.getElementById('deadline').value,
+                completed: false,
+                streak: 0
+            };
+
+            await fetch('/api/items', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            document.getElementById('title').value = '';
+            loadAllData();
+        }
+
+        async function toggleItem(id) {
+            await fetch(`/api/items/${id}/toggle`, { method: 'PUT' });
+            loadAllData();
+        }
+
+        async function deleteItem(id) {
+            await fetch(`/api/items/${id}`, { method: 'DELETE' });
+            loadAllData();
+        }
+
+        loadAllData();
+    </script>
+</body>
+</html>

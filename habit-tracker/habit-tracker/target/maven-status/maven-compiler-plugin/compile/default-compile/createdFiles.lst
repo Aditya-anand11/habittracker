@@ -1,0 +1,5 @@
+com\tracker\repository\ItemRepository.class
+com\tracker\model\BaseItem.class
+com\tracker\model\TaskHabitItem.class
+com\tracker\HabitTrackerApplication.class
+com\tracker\service\ItemService.class
